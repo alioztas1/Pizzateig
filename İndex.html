@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dough Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --bg:#F5F3EF; --card:#FFF; --accent:#E8651A; --al:#FFF0E6;
+  --text:#1A1A1A; --muted:#8A8680; --border:#E8E4DE;
+  --safe-top:env(safe-area-inset-top,44px);
+  --safe-bottom:env(safe-area-inset-bottom,34px);
+}
+body { font-family:'DM Sans',sans-serif; background:var(--bg); min-height:100dvh; color:var(--text); overflow-x:hidden; }
+.status-bar { background:var(--bg); padding:calc(var(--safe-top) + 2px) 24px 6px; display:flex; justify-content:space-between; align-items:center; }
+.status-time { font-size:17px; font-weight:600; letter-spacing:-0.3px; }
+.status-icons { display:flex; gap:6px; align-items:center; }
+.nav-bar { padding:6px 20px 10px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:100; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); background:rgba(245,243,239,0.92); }
+.nav-back { width:34px; height:34px; border-radius:50%; background:var(--card); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,0.08); color:var(--accent); font-size:20px; transition:transform 0.15s; }
+.nav-back:active { transform:scale(0.9); }
+.nav-title { font-family:'DM Serif Display',serif; font-size:22px; flex:1; }
+.nav-site { font-size:11px; color:var(--muted); font-weight:500; }
+@keyframes slideUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes expandDown { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.mode-switcher { margin:4px 20px 14px; background:var(--card); border-radius:14px; padding:4px; display:grid; grid-template-columns:1fr 1fr; box-shadow:0 2px 8px rgba(0,0,0,0.06); animation:slideUp .35s ease both; }
+.mode-btn { padding:11px 8px; border:none; cursor:pointer; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; transition:all .22s; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; gap:5px; }
+.mode-btn.active { background:var(--accent); color:#fff; box-shadow:0 3px 10px rgba(232,101,26,.3); }
+.input-card { margin:0 20px 14px; background:var(--card); border-radius:20px; padding:18px 20px; box-shadow:0 2px 12px rgba(0,0,0,.06); animation:slideUp .35s ease .07s both; }
+.input-label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.input-row { display:flex; align-items:baseline; gap:6px; }
+.big-input { font-family:'DM Serif Display',serif; font-size:52px; color:var(--text); border:none; background:transparent; outline:none; width:100%; min-width:0; }
+.big-unit { font-size:20px; color:var(--muted); white-space:nowrap; }
+.input-hint { font-size:12px; color:var(--muted); margin-top:4px; }
+.portion-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.portion-label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+.portion-wrap { display:flex; align-items:baseline; gap:6px; background:var(--bg); border-radius:12px; padding:10px 14px; }
+.portion-input { font-family:'DM Serif Display',serif; font-size:36px; color:var(--text); border:none; background:transparent; outline:none; width:100%; min-width:0; }
+.portion-unit { font-size:14px; color:var(--muted); white-space:nowrap; }
+.portion-result { margin-top:12px; background:var(--al); border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; }
+.pr-label { font-size:12px; color:var(--accent); font-weight:600; }
+.pr-value { font-family:'DM Serif Display',serif; font-size:22px; color:var(--accent); }
+.yeast-card { margin:0 20px 14px; background:var(--card); border-radius:20px; padding:16px 20px; box-shadow:0 2px 12px rgba(0,0,0,.06); animation:slideUp .35s ease .1s both; }
+.yeast-title { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.yeast-options { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.yeast-opt { border:1.5px solid var(--border); border-radius:14px; padding:12px 8px; cursor:pointer; text-align:center; transition:all .2s; background:transparent; font-family:'DM Sans',sans-serif; }
+.yeast-opt:active { transform:scale(0.95); }
+.yeast-opt.selected { border-color:var(--accent); background:var(--al); }
+.yeast-emoji { font-size:22px; display:block; margin-bottom:4px; }
+.yeast-name { font-size:11px; font-weight:600; color:var(--text); display:block; line-height:1.2; }
+.yeast-sub { font-size:10px; color:var(--muted); display:block; margin-top:2px; }
+.yeast-opt.selected .yeast-name { color:var(--accent); }
+.sourdough-info { margin-top:12px; background:var(--bg); border-radius:12px; padding:12px 14px; display:none; }
+.sourdough-info.show { display:block; animation:expandDown .2s ease; }
+.sd-row { display:flex; align-items:center; gap:10px; }
+.sd-label { font-size:13px; font-weight:500; flex:1; }
+.sd-input { width:64px; text-align:right; border:1.5px solid var(--border); border-radius:10px; padding:6px 10px; font-size:14px; font-family:'DM Sans',sans-serif; font-weight:600; color:var(--accent); outline:none; background:var(--al); }
+.sd-input:focus { border-color:var(--accent); }
+.sd-unit { font-size:12px; color:var(--muted); }
+.sd-note { font-size:11px; color:var(--muted); margin-top:8px; line-height:1.5; }
+.section-label { margin:0 20px 8px; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; animation:slideUp .35s ease .14s both; }
+.ingredients-card { margin:0 20px 14px; background:var(--card); border-radius:20px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,.06); animation:slideUp .35s ease .17s both; }
+.ing-row { display:flex; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); gap:12px; transition:background .12s; }
+.ing-row:last-child { border-bottom:none; }
+.ing-row:active { background:#F9F7F4; }
+.ing-icon { font-size:20px; width:26px; text-align:center; flex-shrink:0; }
+.ing-name { flex:1; font-size:15px; font-weight:500; }
+.ing-right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+.ing-amount { font-family:'DM Serif Display',serif; font-size:19px; color:var(--text); }
+.ing-pct { font-size:11px; font-weight:600; color:var(--accent); background:var(--al); padding:2px 7px; border-radius:20px; }
+.sd-flour-note { font-size:11px; color:var(--accent); margin-top:2px; }
+.summary-card { margin:0 20px 14px; background:var(--text); border-radius:20px; padding:18px 20px; box-shadow:0 4px 16px rgba(26,26,26,.18); animation:slideUp .35s ease .2s both; }
+.sum-title { font-size:11px; font-weight:600; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:14px; }
+.sum-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.sum-item { display:flex; flex-direction:column; gap:3px; }
+.sum-lbl { font-size:11px; color:rgba(255,255,255,.45); }
+.sum-val { font-family:'DM Serif Display',serif; font-size:20px; color:#fff; line-height:1.1; }
+.sum-val span { font-family:'DM Sans',sans-serif; font-size:11px; color:rgba(255,255,255,.5); }
+.adjust-row { margin:0 20px 4px; background:var(--card); border-radius:16px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,.05); animation:slideUp .35s ease .24s both; }
+.adjust-label { font-size:14px; font-weight:500; color:var(--muted); }
+.adjust-toggle { width:34px; height:34px; background:var(--accent); border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; transition:transform .25s; box-shadow:0 4px 10px rgba(232,101,26,.3); }
+.adjust-toggle:active { transform:scale(0.88); }
+.adjust-toggle.open { transform:rotate(180deg); }
+.adjust-panel { margin:0 20px 14px; background:var(--card); border-radius:0 0 16px 16px; overflow:hidden; display:none; }
+.adjust-panel.open { display:block; animation:expandDown .22s ease; }
+.adj-row { display:flex; align-items:center; padding:12px 18px; border-bottom:1px solid var(--border); gap:10px; }
+.adj-row:last-child { border-bottom:none; }
+.adj-name { flex:1; font-size:14px; font-weight:500; }
+.adj-input { width:68px; text-align:right; border:1.5px solid var(--border); border-radius:10px; padding:6px 10px; font-size:14px; font-family:'DM Sans',sans-serif; font-weight:600; color:var(--accent); outline:none; background:var(--al); }
+.adj-input:focus { border-color:var(--accent); }
+.adj-unit { font-size:12px; color:var(--muted); width:18px; }
+.adj-row.yeast-adj-row { display:none; }
+.adj-row.yeast-adj-row.show { display:flex; }
+.bottom-actions { margin:0 20px; display:grid; grid-template-columns:1fr 1fr; gap:12px; padding-bottom:calc(var(--safe-bottom) + 20px); animation:slideUp .35s ease .28s both; }
+.btn { padding:15px; border-radius:16px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:7px; transition:transform .12s; }
+.btn:active { transform:scale(0.95); }
+.btn-primary { background:var(--text); color:#fff; box-shadow:0 4px 14px rgba(26,26,26,.18); }
+.btn-secondary { background:var(--card); color:var(--text); box-shadow:0 2px 8px rgba(0,0,0,.07); }
+.toast { position:fixed; bottom:calc(var(--safe-bottom) + 90px); left:50%; transform:translateX(-50%) translateY(16px); background:var(--text); color:#fff; padding:11px 22px; border-radius:30px; font-size:14px; font-weight:500; opacity:0; transition:all .28s; pointer-events:none; white-space:nowrap; z-index:999; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
+input[type=number] { -moz-appearance:textfield; }
+</style>
+</head>
+<body>
+<div class="status-bar">
+  <div class="status-time" id="clock">--:--</div>
+  <div class="status-icons">
+    <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="4" width="3" height="8" rx="1" fill="currentColor"/><rect x="4.5" y="2.5" width="3" height="9.5" rx="1" fill="currentColor"/><rect x="9" y="0.5" width="3" height="11.5" rx="1" fill="currentColor"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="currentColor" opacity="0.3"/></svg>
+    <span style="font-size:13px;font-weight:500">5G</span>
+    <svg width="25" height="13" viewBox="0 0 25 13" fill="none"><rect x="0.5" y="0.5" width="21" height="12" rx="3.5" stroke="currentColor" stroke-opacity="0.35"/><rect x="2" y="2" width="15" height="9" rx="2" fill="currentColor"/><path d="M23 4.5V8.5C23.8 8.2 24.5 7.4 24.5 6.5C24.5 5.6 23.8 4.8 23 4.5Z" fill="currentColor" opacity="0.4"/></svg>
+  </div>
+</div>
+<div class="nav-bar">
+  <button class="nav-back">‹</button>
+  <div class="nav-title">Dough Calculator</div>
+  <div class="nav-site">stadlermade</div>
+</div>
+<div class="mode-switcher">
+  <button class="mode-btn active" id="modeABtn" onclick="setMode('A')">🌾 Un Ağırlığı</button>
+  <button class="mode-btn" id="modeBBtn" onclick="setMode('B')">🍞 Porsiyon</button>
+</div>
+<div class="input-card">
+  <div id="modeA">
+    <div class="input-label">🌾 Toplam Un Miktarı</div>
+    <div class="input-row">
+      <input class="big-input" type="number" id="flourInput" value="10000" inputmode="decimal">
+      <span class="big-unit">gr</span>
+    </div>
+    <div class="input-hint">Baker's % oranlarına göre hesaplanır</div>
+  </div>
+  <div id="modeB" style="display:none">
+    <div class="portion-grid">
+      <div>
+        <div class="portion-label">🍞 Adet</div>
+        <div class="portion-wrap">
+          <input class="portion-input" type="number" id="portionCount" value="175" inputmode="decimal">
+          <span class="portion-unit">adet</span>
+        </div>
+      </div>
+      <div>
+        <div class="portion-label">⚖️ Ağırlık</div>
+        <div class="portion-wrap">
+          <input class="portion-input" type="number" id="portionWeight" value="220" inputmode="decimal">
+          <span class="portion-unit">gr</span>
+        </div>
+      </div>
+    </div>
+    <div class="portion-result">
+      <span class="pr-label">Toplam Hamur Hedefi</span>
+      <span class="pr-value" id="totalTarget">—</span>
+    </div>
+  </div>
+</div>
+<div class="yeast-card">
+  <div class="yeast-title">Maya Tipi</div>
+  <div class="yeast-options">
+    <button class="yeast-opt" id="yopt-fresh" onclick="setYeast('fresh')">
+      <span class="yeast-emoji">🌿</span>
+      <span class="yeast-name">Yaş Maya</span>
+      <span class="yeast-sub">Taze</span>
+    </button>
+    <button class="yeast-opt selected" id="yopt-dry" onclick="setYeast('dry')">
+      <span class="yeast-emoji">🟤</span>
+      <span class="yeast-name">Kuru Maya</span>
+      <span class="yeast-sub">Instant / Aktif</span>
+    </button>
+    <button class="yeast-opt" id="yopt-sour" onclick="setYeast('sour')">
+      <span class="yeast-emoji">🫙</span>
+      <span class="yeast-name">Ekşi Maya</span>
+      <span class="yeast-sub">Levain</span>
+    </button>
+  </div>
+  <div class="sourdough-info" id="sdInfo">
+    <div class="sd-row">
+      <span class="sd-label">Levain oranı (una göre)</span>
+      <input class="sd-input" type="number" id="sdPct" value="20" min="5" max="50" step="1" inputmode="decimal">
+      <span class="sd-unit">%</span>
+    </div>
+    <div class="sd-row" style="margin-top:10px">
+      <span class="sd-label">Levain hidrasyon</span>
+      <input class="sd-input" type="number" id="sdHyd" value="100" min="50" max="150" step="5" inputmode="decimal">
+      <span class="sd-unit">%</span>
+    </div>
+    <div class="sd-note" id="sdNote">Levain %100 hidrasyonda: un ve su eşit ağırlıkta.</div>
+  </div>
+</div>
+<div class="section-label">Malzemeler</div>
+<div class="ingredients-card">
+  <div class="ing-row">
+    <span class="ing-icon">🌾</span><span class="ing-name">Un</span>
+    <div class="ing-right">
+      <span class="ing-amount" id="flour-amt">—</span>
+      <span class="ing-pct">100%</span>
+      <span class="sd-flour-note" id="flourNote" style="display:none"></span>
+    </div>
+  </div>
+  <div class="ing-row">
+    <span class="ing-icon">💧</span><span class="ing-name">Su</span>
+    <div class="ing-right"><span class="ing-amount" id="water-amt">—</span><span class="ing-pct" id="water-pct">—</span></div>
+  </div>
+  <div class="ing-row">
+    <span class="ing-icon">🧴</span><span class="ing-name">Yağ</span>
+    <div class="ing-right"><span class="ing-amount" id="oil-amt">—</span><span class="ing-pct" id="oil-pct">—</span></div>
+  </div>
+  <div class="ing-row">
+    <span class="ing-icon">🧂</span><span class="ing-name">Tuz</span>
+    <div class="ing-right"><span class="ing-amount" id="salt-amt">—</span><span class="ing-pct" id="salt-pct">—</span></div>
+  </div>
+  <div class="ing-row" id="yeastRow">
+    <span class="ing-icon" id="yeastIcon">🟤</span>
+    <span class="ing-name" id="yeastName">Kuru Maya</span>
+    <div class="ing-right"><span class="ing-amount" id="yeast-amt">—</span><span class="ing-pct" id="yeast-pct">—</span></div>
+  </div>
+  <div class="ing-row" id="levainRow" style="display:none">
+    <span class="ing-icon">🫙</span>
+    <span class="ing-name">Levain (toplam)</span>
+    <div class="ing-right"><span class="ing-amount" id="levain-amt">—</span><span class="ing-pct" id="levain-pct">—</span></div>
+  </div>
+  <div class="ing-row">
+    <span class="ing-icon">🍬</span><span class="ing-name">Şeker</span>
+    <div class="ing-right"><span class="ing-amount" id="sugar-amt">—</span><span class="ing-pct" id="sugar-pct">—</span></div>
+  </div>
+</div>
+<div class="summary-card">
+  <div class="sum-title">Baker's % Özeti</div>
+  <div class="sum-grid">
+    <div class="sum-item"><div class="sum-lbl">Hidrasyon</div><div class="sum-val" id="s-hyd">—<span>%</span></div></div>
+    <div class="sum-item"><div class="sum-lbl">Un</div><div class="sum-val" id="s-flour">—<span>gr</span></div></div>
+    <div class="sum-item"><div class="sum-lbl">Toplam Hamur</div><div class="sum-val" id="s-total">—<span>gr</span></div></div>
+    <div class="sum-item"><div class="sum-lbl">Tuz</div><div class="sum-val" id="s-salt">—<span>%</span></div></div>
+    <div class="sum-item"><div class="sum-lbl">Maya</div><div class="sum-val" id="s-yeast">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Hamur Tipi</div><div class="sum-val" style="font-size:14px;padding-top:5px;color:#E8651A" id="s-type">—</div></div>
+  </div>
+</div>
+<div class="adjust-row">
+  <span class="adjust-label">Yüzdeleri ayarla</span>
+  <button class="adjust-toggle" id="adjBtn" onclick="toggleAdj()">
+    <svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1L6 6L11 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</div>
+<div class="adjust-panel" id="adjPanel">
+  <div class="adj-row"><span class="ing-icon">💧</span><span class="adj-name">Su (Hidrasyon)</span><input class="adj-input" type="number" id="adj-water" value="62" step="0.5" inputmode="decimal"><span class="adj-unit">%</span></div>
+  <div class="adj-row"><span class="ing-icon">🧴</span><span class="adj-name">Yağ</span><input class="adj-input" type="number" id="adj-oil" value="3" step="0.5" inputmode="decimal"><span class="adj-unit">%</span></div>
+  <div class="adj-row"><span class="ing-icon">🧂</span><span class="adj-name">Tuz</span><input class="adj-input" type="number" id="adj-salt" value="2" step="0.1" inputmode="decimal"><span class="adj-unit">%</span></div>
+  <div class="adj-row yeast-adj-row" id="adj-fresh-row"><span class="ing-icon">🌿</span><span class="adj-name">Yaş Maya</span><input class="adj-input" type="number" id="adj-fresh" value="1.5" step="0.1" inputmode="decimal"><span class="adj-unit">%</span></div>
+  <div class="adj-row yeast-adj-row show" id="adj-dry-row"><span class="ing-icon">🟤</span><span class="adj-name">Kuru Maya</span><input class="adj-input" type="number" id="adj-dry" value="0.5" step="0.05" inputmode="decimal"><span class="adj-unit">%</span></div>
+  <div class="adj-row"><span class="ing-icon">🍬</span><span class="adj-name">Şeker</span><input class="adj-input" type="number" id="adj-sugar" value="1" step="0.5" inputmode="decimal"><span class="adj-unit">%</span></div>
+</div>
+<div class="bottom-actions">
+  <button class="btn btn-primary" onclick="showToast('💬 Yakında...')">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="white" stroke-width="1.4"/><path d="M8 11.5V11M8 9C8 7.7 9.8 7.2 9.8 5.9C9.8 4.7 9 4.2 8 4.2C7 4.2 6.2 5 6.2 5.9" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+    Ask Questions
+  </button>
+  <button class="btn btn-secondary" onclick="saveRecipe()">
+    <svg width="14" height="16" viewBox="0 0 14 16" fill="none"><path d="M1 1H13V15L7 11.5L1 15V1Z" stroke="#1A1A1A" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    Kaydet
+  </button>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+let mode='A',yeastType='dry';
+function tick(){const n=new Date();document.getElementById('clock').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
+tick();setInterval(tick,10000);
+function setMode(m){mode=m;document.getElementById('modeA').style.display=m==='A'?'':'none';document.getElementById('modeB').style.display=m==='B'?'':'none';document.getElementById('modeABtn').classList.toggle('active',m==='A');document.getElementById('modeBBtn').classList.toggle('active',m==='B');calc();}
+function setYeast(t){yeastType=t;['fresh','dry','sour'].forEach(x=>{document.getElementById('yopt-'+x).classList.toggle('selected',x===t);});document.getElementById('sdInfo').classList.toggle('show',t==='sour');document.getElementById('yeastRow').style.display=t==='sour'?'none':'';document.getElementById('levainRow').style.display=t==='sour'?'':'none';document.getElementById('adj-fresh-row').classList.toggle('show',t==='fresh');document.getElementById('adj-dry-row').classList.toggle('show',t==='dry');if(t==='fresh'){document.getElementById('yeastIcon').textContent='🌿';document.getElementById('yeastName').textContent='Yaş Maya';}else if(t==='dry'){document.getElementById('yeastIcon').textContent='🟤';document.getElementById('yeastName').textContent='Kuru Maya';}calc();}
+function toggleAdj(){document.getElementById('adjPanel').classList.toggle('open');document.getElementById('adjBtn').classList.toggle('open');}
+function fmt(n){if(!n||isNaN(n))return'0';if(n>=1000)return Math.round(n).toLocaleString('tr-TR');return parseFloat(n.toPrecision(4)).toLocaleString('tr-TR',{maximumFractionDigits:2});}
+function g(id){return parseFloat(document.getElementById(id).value)||0;}
+function set(id,val){document.getElementById(id).textContent=val;}
+function calc(){const wp=g('adj-water')||62,op=g('adj-oil')||3,sp=g('adj-salt')||2,gp=g('adj-sugar')||1;let yp=0;if(yeastType==='fresh')yp=g('adj-fresh')||1.5;else if(yeastType==='dry')yp=g('adj-dry')||0.5;const sdP=g('sdPct')||20,sdH=g('sdHyd')||100;const lff=1/(1+sdH/100),lwf=(sdH/100)/(1+sdH/100);let ratio=yeastType==='sour'?1+(wp+op+sp+gp+sdP)/100:1+(wp+op+sp+gp+yp)/100;let flour=0;if(mode==='A'){flour=g('flourInput')||0;}else{const cnt=g('portionCount')||0,wgt=g('portionWeight')||0,target=cnt*wgt;set('totalTarget',fmt(target)+' gr');flour=target/ratio;}const water=flour*wp/100,oil=flour*op/100,salt=flour*sp/100,sugar=flour*gp/100;let ya=0,la=0;if(yeastType==='sour'){la=flour*sdP/100;const lf=la*lff,lw=la*lwf;set('levain-amt',fmt(la)+' gr');set('levain-pct',sdP+'%');set('flour-amt',fmt(flour)+' gr');document.getElementById('flourNote').style.display='';document.getElementById('flourNote').textContent='(Direkt: '+fmt(flour-lf)+' + Levain: '+fmt(lf)+')';const ew=Math.max(0,water-lw);set('water-amt',fmt(ew)+' gr');set('water-pct',wp+'% (ekstra)');document.getElementById('s-yeast').innerHTML=sdP+'<span>%</span>';document.getElementById('sdNote').textContent='Levain: '+fmt(la)+' gr → Un: '+fmt(lf)+' gr, Su: '+fmt(lw)+' gr. Kasaya ekstra su: '+fmt(ew)+' gr.';}else{ya=flour*yp/100;document.getElementById('flourNote').style.display='none';set('flour-amt',fmt(flour)+' gr');set('water-amt',fmt(water)+' gr');set('water-pct',wp+'%');set('yeast-amt',fmt(ya)+' gr');set('yeast-pct',yp+'%');document.getElementById('s-yeast').innerHTML=yp+'<span>%</span>';}set('oil-amt',fmt(oil)+' gr');set('salt-amt',fmt(salt)+' gr');set('sugar-amt',fmt(sugar)+' gr');set('oil-pct',op+'%');set('salt-pct',sp+'%');set('sugar-pct',gp+'%');const total=yeastType==='sour'?flour+water+oil+salt+sugar+la:flour+water+oil+salt+sugar+ya;document.getElementById('s-hyd').innerHTML=wp+'<span>%</span>';document.getElementById('s-flour').innerHTML=fmt(flour)+'<span>gr</span>';document.getElementById('s-total').innerHTML=fmt(total)+'<span>gr</span>';document.getElementById('s-salt').innerHTML=sp+'<span>%</span>';let type='Sert';if(wp>=80)type='Çok Yumuşak';else if(wp>=70)type='Yumuşak';else if(wp>=60)type='Orta';set('s-type',type);}
+['flourInput','portionCount','portionWeight'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calc);});
+['adj-water','adj-oil','adj-salt','adj-fresh','adj-dry','adj-sugar','sdPct','sdHyd'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calc);});
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function saveRecipe(){showToast('🔖 Kaydedildi! Un: '+document.getElementById('flour-amt').textContent);}
+setYeast('dry');setMode('A');
+</script>
+</body>
+</html>
